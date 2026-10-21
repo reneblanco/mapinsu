@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-2XBJYMWJFQ"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-2XBJYMWJFQ');
+    </script>
+    
+    <!-- ==========================================
+         SEO & META TAGS PARA MAPINSU
+         ========================================== -->
+    <title>Mapa Interactivo de Suelos Poza Rica | MAPINSU</title>
+    <meta name="description" content="MAPINSU: Plataforma de inteligencia territorial y consulta de datos geotécnicos, estratigrafía y recomendaciones de cimentación para Poza Rica, Veracruz. Desarrollado para la Universidad Veracruzana.">
+    <meta name="keywords" content="Mapa de suelos, Poza Rica, Geotécnico, Cimentación, Mecánica de suelos, Universidad Veracruzana, Arquitectura, Urbanismo, Estratigrafía, MAPINSU, Ingeniería">
+    <meta name="author" content="Urbimetrics / Universidad Veracruzana">
+    <link rel="canonical" href="https://mapinsu.com/" />
+    
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mapinsu.com/">
+    <meta property="og:title" content="Mapa Interactivo de Suelos Poza Rica | MAPINSU">
+    <meta property="og:description" content="Consulta rápida de datos geotécnicos, estratigrafía y dictámenes estructurales de cimentación en Poza Rica. Una herramienta de la Universidad Veracruzana.">
+    <meta property="og:image" content="https://mapinsu.com/data/img/mapinsu-og.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://mapinsu.com/">
+    <meta property="twitter:title" content="Mapa Interactivo de Suelos Poza Rica | MAPINSU">
+    <meta property="twitter:description" content="Consulta rápida de datos geotécnicos, estratigrafía y dictámenes estructurales de cimentación en Poza Rica. Una herramienta de la Universidad Veracruzana.">
+    <meta property="twitter:image" content="https://mapinsu.com/data/img/mapinsu-og.jpg">
+
+    <!-- Favicon (Opcional, si tienes uno) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- 
+        === IMPORTACIÓN DE DATOS === 
+    -->
+    <script src="data/PRDELIMITACIN_5.js"></script>
+    <script src="data/SUELOTIPOVERTISOLPELICO_1.js"></script>
+    <script src="data/SUELOTIPOREGASOLCALCARICO_2.js"></script>
+    <script src="data/SUELOTIPOTECHNOSOL_3.js"></script>
+    <script src="data/SUELOTIPOCAMBISOLVERTICO_4.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        
+        #info-drawer {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1000;
+        }
+        .drawer-open { transform: translateX(0); }
+        .drawer-closed { transform: translateX(100%); }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+        .custom-checkbox {
+            accent-color: #18529D;
+            width: 1.1rem;
+            height: 1.1rem;
+            cursor: pointer;
+        }
+        .custom-radio {
+            accent-color: #18529D;
+            width: 1.1rem;
+            height: 1.1rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="overflow-hidden bg-slate-50 text-slate-800 flex flex-col h-[100dvh] relative w-full">
+
+    <!-- Header Institucional -->
+    <header class="bg-[#18529D] border-b border-[#113d75] shadow-md px-4 sm:px-6 pt-[max(env(safe-area-inset-top),0.75rem)] pb-3 flex justify-between items-center z-[500] flex-shrink-0">
+        <div class="flex items-center gap-2 sm:gap-3">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white/10 rounded-xl flex items-center justify-center text-white shadow-inner border border-white/20 flex-shrink-0">
+                <i data-lucide="map" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+            </div>
+            <div class="min-w-0">
+                <h1 class="font-bold text-lg sm:text-xl tracking-tight text-white leading-none truncate">MAPINSU</h1>
+                <p class="text-[10px] sm:text-xs font-medium text-blue-200 mt-0.5 sm:mt-1 uppercase tracking-wider truncate">Mapa Interactivo de Suelos Poza Rica</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="centrarMapa()" aria-label="Centrar mapa en Poza Rica" class="bg-[#28AD56] hover:bg-[#208a44] text-white text-sm font-bold py-1.5 px-3 sm:py-2 sm:px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 border border-[#208a44] whitespace-nowrap">
+                <i data-lucide="crosshair" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Centrar Mapa</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content (Mapa) -->
+    <main class="flex-1 relative w-full">
+        <!-- Alerta de Preview -->
+        <div id="preview-alert" class="absolute top-4 left-1/2 -translate-x-1/2 z-[600] bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 sm:px-5 sm:py-3 rounded-xl shadow-lg flex items-center gap-2 sm:gap-3 w-[95%] sm:w-11/12 max-w-md">
+            <i data-lucide="info" class="w-5 h-5 sm:w-6 sm:h-6 text-blue-500 flex-shrink-0"></i>
+            <div class="text-xs sm:text-sm">
+                <p class="font-bold mb-0.5">Modo Previsualización</p>
+                <p class="text-blue-700 opacity-90 leading-tight">Sube la carpeta <code>data/</code> a tu servidor.</p>
+            </div>
+        </div>
+
+        <div id="map" class="absolute inset-0 w-full h-full z-[1]"></div>
+
+        <!-- Panel de Capas FLOTANTE (Solo Desktop) -->
+        <div class="hidden md:block absolute top-4 right-4 z-[400]">
+            <div class="bg-white/95 backdrop-blur-md border border-slate-200 rounded-xl shadow-lg w-64 overflow-hidden">
+                <div class="bg-slate-50 px-4 py-2.5 border-b border-slate-200 flex items-center gap-2">
+                    <i data-lucide="layers" class="w-4 h-4 text-slate-500"></i>
+                    <h3 class="font-bold text-sm text-slate-700">Control de Capas</h3>
+                </div>
+                <div class="p-4 space-y-4">
+                    <div class="space-y-2">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Mapa Base</p>
+                        <label class="flex items-center gap-2 cursor-pointer group">
+                            <input type="radio" name="basemap" value="streets" checked onchange="changeBaseMap(this.value)" class="custom-radio">
+                            <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">Mapa de Calles</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer group">
+                            <input type="radio" name="basemap" value="satellite" onchange="changeBaseMap(this.value)" class="custom-radio">
+                            <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">Satélite Híbrido</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer group">
+                            <input type="radio" name="basemap" value="topo" onchange="changeBaseMap(this.value)" class="custom-radio">
+                            <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">Mapa Topográfico</span>
+                        </label>
+                    </div>
+                    <div class="h-px bg-slate-200 w-full"></div>
+                    <div class="space-y-2">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Capas Interactivas</p>
+                        <div id="desktop-layer-list" class="space-y-2.5">
+                            <!-- Se llena por JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón Flotante Capas (Solo Mobile) -->
+        <button onclick="openModal('modal-layers')" class="md:hidden absolute bottom-4 right-4 z-[400] bg-white text-slate-800 p-2.5 rounded-xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)] border border-slate-200 flex flex-col items-center justify-center gap-0.5 active:scale-95 transition-transform w-14">
+            <i data-lucide="layers" class="w-6 h-6 text-[#18529D]"></i>
+            <span class="text-[9px] font-bold tracking-wide text-[#18529D]">CAPAS</span>
+        </button>
+    </main>
+
+    <!-- Footer Institucional -->
+    <footer class="bg-[#18529D] text-white pt-2.5 sm:pt-3 pb-[max(env(safe-area-inset-bottom),0.75rem)] px-4 sm:px-6 text-[10px] sm:text-xs flex flex-col md:flex-row justify-center md:justify-between items-center z-[500] flex-shrink-0 border-t-2 border-[#113d75] gap-2 md:gap-0">
+        <div class="flex items-center justify-center gap-x-2 gap-y-1 sm:gap-x-4 w-full md:w-auto flex-wrap">
+            <span class="font-black text-white tracking-wider text-xs sm:text-sm">MAPINSU</span>
+            <span class="text-white/30 font-bold hidden sm:inline">|</span>
+            <button onclick="openModal('modal-help')" class="font-bold text-white hover:text-[#28AD56] hover:underline transition-all">Instrucciones</button>
+            <span class="text-white/30 font-bold sm:hidden">•</span>
+            <button onclick="openModal('modal-about')" class="font-bold text-white hover:text-[#28AD56] hover:underline transition-all">Acerca de</button>
+            <span class="text-white/30 font-bold sm:hidden">•</span>
+            <button onclick="openModal('modal-bug')" class="font-bold text-white hover:text-[#28AD56] hover:underline transition-all">Reportar fallo</button>
+        </div>
+    </footer>
+
+    <!-- MODAL: Control de Capas (Solo Mobile) -->
+    <div id="modal-layers" class="fixed inset-0 z-[2000] hidden items-end sm:items-center justify-center">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm modal-overlay opacity-0 transition-opacity duration-300" onclick="closeModal('modal-layers')"></div>
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:w-11/12 sm:max-w-md relative z-10 p-6 modal-content transform transition-all duration-300 opacity-0 translate-y-full sm:translate-y-8 sm:scale-95 pb-[max(env(safe-area-inset-bottom),2rem)] max-h-[85vh] overflow-y-auto">
+            <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6 sm:hidden"></div>
+            <button onclick="closeModal('modal-layers')" aria-label="Cerrar" class="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors hidden sm:block">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 bg-slate-100 text-slate-700 rounded-xl flex items-center justify-center">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900">Control de Capas</h3>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 space-y-3">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Mapa Base</p>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="radio" name="basemap_mobile" value="streets" checked onchange="changeBaseMap(this.value)" class="custom-radio w-5 h-5">
+                        <span class="text-base font-medium text-slate-800">Mapa de Calles</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="radio" name="basemap_mobile" value="satellite" onchange="changeBaseMap(this.value)" class="custom-radio w-5 h-5">
+                        <span class="text-base font-medium text-slate-800">Satélite Híbrido</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="radio" name="basemap_mobile" value="topo" onchange="changeBaseMap(this.value)" class="custom-radio w-5 h-5">
+                        <span class="text-base font-medium text-slate-800">Mapa Topográfico</span>
+                    </label>
+                </div>
+
+                <div class="space-y-3">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-1">Capas Interactivas</p>
+                    <div id="mobile-layer-list" class="space-y-4 px-1"></div>
+                </div>
+            </div>
+            <button onclick="closeModal('modal-layers')" class="w-full mt-6 bg-[#18529D] hover:bg-[#113d75] text-white font-bold py-3 rounded-xl sm:hidden transition-colors">Ver Mapa</button>
+        </div>
+    </div>
+
+    <!-- Info Drawer (Panel Lateral) -->
+    <div id="info-drawer" class="drawer-closed fixed top-0 right-0 w-full md:w-[450px] h-[100dvh] bg-white shadow-2xl border-l border-slate-200 overflow-y-auto flex flex-col z-[1000]">
+        <div id="drawer-header" class="sticky top-0 z-20 px-5 sm:px-6 pt-[max(env(safe-area-inset-top),1rem)] pb-4 sm:pb-5 border-b border-slate-200 flex justify-between items-start bg-white">
+            <div class="pr-4">
+                <span id="suelo-clase" class="inline-block px-2.5 py-1 rounded-md text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1.5 sm:mb-2"></span>
+                <h2 id="suelo-nombre" class="text-xl sm:text-2xl font-bold text-slate-900 leading-tight"></h2>
+            </div>
+            <button onclick="closeDrawer()" aria-label="Cerrar panel" class="p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors flex-shrink-0">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="p-5 sm:p-6 space-y-6 sm:space-y-8 flex-1 pb-[max(env(safe-area-inset-bottom),6rem)]">
+            <section>
+                <p id="suelo-desc" class="text-slate-600 text-sm leading-relaxed text-justify"></p>
+            </section>
+            
+            <section id="galeria-section" class="hidden">
+                <h3 class="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i data-lucide="image" class="w-4 h-4"></i> Referencias del Suelo
+                </h3>
+                <div id="galeria-grid" class="grid grid-cols-2 gap-3 sm:gap-4"></div>
+            </section>
+
+            <section>
+                <h3 class="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-4 h-4"></i> Propiedades Físicas
+                </h3>
+                <div id="propiedades-grid" class="grid grid-cols-2 gap-2 sm:gap-3"></div>
+            </section>
+
+            <section id="calificador-section">
+                <h3 class="text-[11px] sm:text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <i data-lucide="flask-conical" class="w-4 h-4"></i> Calificador Principal
+                </h3>
+                <div class="bg-blue-50 border border-blue-100 rounded-xl p-3 sm:p-4">
+                    <p id="suelo-calificador" class="text-sm text-blue-900 leading-relaxed text-justify"></p>
+                </div>
+            </section>
+
+            <section id="cimentacion-section">
+                <div class="bg-emerald-50 border border-emerald-200 rounded-xl sm:rounded-2xl p-4 sm:p-5 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl"></div>
+                    <h3 class="text-[11px] sm:text-xs font-bold text-emerald-600 uppercase tracking-wider mb-3 sm:mb-4 relative z-10 flex items-center gap-2">
+                        <i data-lucide="building-2" class="w-4 h-4"></i> Dictamen Estructural
+                    </h3>
+                    <div class="space-y-3 sm:space-y-4 relative z-10">
+                        <div>
+                            <p class="text-[10px] sm:text-xs text-emerald-600/70 font-semibold mb-0.5 sm:mb-1">CAPACIDAD DE CARGA</p>
+                            <p id="cim-capacidad" class="text-base sm:text-lg font-bold text-emerald-900"></p>
+                        </div>
+                        <div class="bg-white/60 rounded-xl p-3 border border-emerald-100">
+                            <p class="text-[10px] sm:text-xs text-emerald-600/70 font-semibold mb-0.5 sm:mb-1">RECOMENDACIÓN TÉCNICA</p>
+                            <p id="cim-recom" class="text-sm font-semibold text-emerald-900 mb-2"></p>
+                            <ul id="cim-motivos" class="text-xs text-emerald-700 space-y-1 ml-4 list-disc marker:text-emerald-400"></ul>
+                            
+                            <div id="cim-galeria-grid" class="w-full mt-4 flex flex-col gap-4"></div>
+                        </div>
+                        <div class="bg-emerald-900/5 rounded-lg p-3">
+                            <p class="text-[10px] sm:text-[11px] font-bold text-emerald-700 uppercase mb-1">Alternativa / Consideraciones</p>
+                            <p id="cim-alt" class="text-xs text-emerald-800 text-justify"></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="bg-amber-50 p-4 rounded-xl border border-amber-200 mt-6 flex items-start gap-3">
+                <i data-lucide="shield-alert" class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                <p class="text-[10px] sm:text-[11px] text-amber-800 leading-relaxed text-justify">
+                    <strong>AVISO ACADÉMICO:</strong> Esta información es estrictamente para fines ilustrativos y educativos. <strong>No reemplaza un Estudio de Mecánica de Suelos (EMS)</strong> formal validado por un perito. Se recomienda realizar pruebas en sitio. Los creadores de la plataforma no asumen responsabilidad civil o estructural por el uso de estos datos.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Visor de Imágenes -->
+    <div id="modal-image" class="fixed inset-0 z-[3000] hidden items-center justify-center px-4">
+        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm modal-overlay opacity-0 transition-opacity duration-300" onclick="closeModal('modal-image')"></div>
+        <div class="relative z-10 w-full max-w-5xl flex flex-col items-center modal-content transform transition-all duration-300 opacity-0 scale-95">
+            <button onclick="closeModal('modal-image')" aria-label="Cerrar imagen" class="absolute -top-12 right-0 md:-right-12 md:top-0 p-2 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all backdrop-blur-md">
+                <i data-lucide="x" class="w-6 h-6 sm:w-8 sm:h-8"></i>
+            </button>
+            <img id="expanded-image" src="" alt="Imagen ampliada" class="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain border border-white/10">
+        </div>
+    </div>
+
+    <!-- MODAL: Ayuda -->
+    <div id="modal-help" class="fixed inset-0 z-[2000] hidden items-center justify-center px-4">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm modal-overlay opacity-0 transition-opacity duration-300" onclick="closeModal('modal-help')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 p-5 sm:p-6 modal-content transform transition-all duration-300 opacity-0 translate-y-4 sm:translate-y-8 scale-95">
+            <button onclick="closeModal('modal-help')" aria-label="Cerrar" class="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="book-open" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-lg sm:text-xl font-bold text-slate-900">Guía de Uso</h3>
+            </div>
+            <div class="space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed max-h-[60vh] overflow-y-auto pr-2">
+                <p>Bienvenido a <strong>MAPINSU (Mapa Interactivo de Suelos Poza Rica)</strong>. Sigue estos pasos:</p>
+                <ol class="list-decimal pl-5 space-y-2 sm:space-y-3 marker:font-bold marker:text-[#18529D]">
+                    <li><strong>Activa las capas:</strong> Usa el panel de capas para encender o apagar los suelos o el límite de la ciudad.</li>
+                    <li><strong>Ubica tu zona:</strong> Navega por el mapa y <strong>haz clic sobre la zona del proyecto</strong> para identificar la estratigrafía.</li>
+                    <li><strong>Analiza el dictamen:</strong> Lee las propiedades, la capacidad de carga (referencial) y la recomendación de cimentación.</li>
+                </ol>
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 mt-6 flex items-start gap-2">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                    <p class="text-[9px] sm:text-[10px] text-amber-800 leading-relaxed text-justify">
+                        <strong>AVISO ACADÉMICO:</strong> Esta plataforma es una herramienta educativa. <strong>No reemplaza un Estudio de Mecánica de Suelos (EMS)</strong> formal. No nos hacemos responsables de su uso en proyectos constructivos reales.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Acerca De -->
+    <div id="modal-about" class="fixed inset-0 z-[2000] hidden items-center justify-center px-4">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm modal-overlay opacity-0 transition-opacity duration-300" onclick="closeModal('modal-about')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative z-10 p-5 sm:p-6 modal-content transform transition-all duration-300 opacity-0 translate-y-4 sm:translate-y-8 scale-95">
+            <button onclick="closeModal('modal-about')" aria-label="Cerrar" class="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-blue-100 text-[#18529D] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-lg sm:text-xl font-bold text-slate-900">Acerca de MAPINSU</h3>
+            </div>
+            <div class="space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed max-h-[65vh] overflow-y-auto pr-2">
+                <p class="text-justify">Este recurso educativo innovador consiste en un mapa interactivo de suelos de la ciudad de Poza Rica, Veracruz, desarrollado en la plataforma <strong>QGIS</strong>, el cual permite visualizar de manera dinámica e interactiva información geotécnica relevante del entorno local. A través de polígonos y marcadores georreferenciados, el usuario puede explorar datos como tipos de suelo, capacidad de carga y recomendaciones de cimentación, integrando información proveniente de fuentes oficiales como <strong>INEGI</strong> y <strong>SEMARNAT</strong>.</p>
+                <p class="text-justify">El objetivo del recurso es fortalecer el proceso de enseñanza-aprendizaje en la <strong>Licenciatura en Arquitectura</strong>, particularmente en las experiencias educativas de <em>Taller de Construcción: Cimentaciones y Estructuras</em> y <em>Metodología de la Investigación Aplicada a la Arquitectura</em>, promoviendo que el estudiantado analice, comprenda y aplique conocimientos técnicos a partir de información contextualizada del entorno local.</p>
+                <p class="text-justify">La utilidad de esta herramienta radica en que permite vincular la teoría con la práctica, facilitando la comprensión de conceptos complejos mediante un entorno visual accesible y dinámico. Asimismo, fomenta el aprendizaje autónomo, el pensamiento crítico y la capacidad de desarrollar proyectos arquitectónicos con pertinencia social, al trabajar con datos reales del contexto regional.</p>
+                <p class="text-justify">De esta manera, el mapa interactivo se posiciona como un recurso didáctico innovador que contribuye a la incorporación de tecnologías digitales en la enseñanza de la arquitectura, favoreciendo procesos de aprendizaje significativos y alineados con las necesidades actuales de la educación superior.</p>
+
+                <div class="bg-slate-50 p-3 sm:p-4 rounded-xl border border-slate-100 mt-2">
+                    <p class="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                        Equipo de Trabajo
+                    </p>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Docentes</p>
+                            <ul class="text-xs sm:text-sm text-slate-700 space-y-1">
+	                                <li class="flex items-baseline justify-between gap-3">
+	                                    <span>Arq. María Erika Arias Bustos</span>
+	                                </li>
+	                                <li class="flex items-baseline justify-between gap-3">
+	                                    <span>Dra. Blanca Inés Aguilar Frías</span>
+	                                </li>
+                            </ul>
+                        </div>
+                        <div class="pt-3 border-t border-slate-200">
+                            <p class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Estudiantes</p>
+                            <ul class="text-xs sm:text-sm text-slate-700 space-y-1">
+	                                <li class="flex items-baseline justify-between gap-3">
+	                                    <span>Dulce Lizbeth Cruz Hernández</span>
+	                                </li>
+	                                <li class="flex items-baseline justify-between gap-3">
+	                                    <span>Oscar René Blanco Ortíz</span>
+	                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 mt-2 flex items-start gap-2">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                    <p class="text-[9px] sm:text-[10px] text-amber-800 leading-relaxed text-justify">
+                        <strong>AVISO ACADÉMICO:</strong> Esta plataforma es una herramienta educativa. <strong>No reemplaza un Estudio de Mecánica de Suelos (EMS)</strong> formal. No nos hacemos responsables de su uso en proyectos constructivos reales.
+                    </p>
+                </div>
+                <div class="mt-4 pt-4 border-t border-slate-100 text-center sm:text-right">
+                    <p class="text-[9px] sm:text-[10px] text-slate-400 tracking-wide">
+                        Diseñado &amp; Desarrollado con ❤️ en 🇲🇽 por
+                        <a href="https://urbimetrics.com" target="_blank" rel="noopener noreferrer" class="font-bold text-slate-500 hover:text-[#18529D] transition-colors ml-0.5">Urbimetrics</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Reportar Fallo -->
+    <div id="modal-bug" class="fixed inset-0 z-[2000] hidden items-center justify-center px-4">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm modal-overlay opacity-0 transition-opacity duration-300" onclick="closeModal('modal-bug')"></div>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md relative z-10 p-5 sm:p-6 modal-content transform transition-all duration-300 opacity-0 translate-y-4 sm:translate-y-8 scale-95">
+            <button onclick="closeModal('modal-bug')" aria-label="Cerrar" class="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <div class="flex items-center gap-3 mb-4">
+                <div class="w-10 h-10 bg-emerald-100 text-[#28AD56] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="bug" class="w-5 h-5"></i>
+                </div>
+                <h3 class="text-lg sm:text-xl font-bold text-slate-900">Reportar Fallo</h3>
+            </div>
+            <form name="reporte-bug" method="POST" data-netlify="true" netlify-honeypot="bot-field" action="/gracias.html" class="space-y-3 sm:space-y-4">
+                <input type="hidden" name="form-name" value="reporte-bug" />
+                <p class="hidden">
+                    <label>No llenar este campo: <input name="bot-field" /></label>
+                </p>
+                <div>
+                    <input type="email" name="email" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#18529D] focus:bg-white transition-all" placeholder="Tu Correo (Opcional)">
+                </div>
+                <div>
+                    <textarea name="descripcion" rows="3" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#18529D] focus:bg-white transition-all resize-none" placeholder="Describe el problema en MAPINSU..."></textarea>
+                </div>
+                <button type="submit" class="w-full bg-[#18529D] hover:bg-[#12407a] text-white font-bold py-2 sm:py-2.5 rounded-lg transition-colors flex justify-center items-center gap-2 shadow-sm text-sm">
+                    <i data-lucide="send" class="w-4 h-4"></i>
+                    Enviar Reporte
+                </button>
+            </form>
+            <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 mt-6 flex items-start gap-2">
+                <i data-lucide="shield-alert" class="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5"></i>
+                <p class="text-[9px] sm:text-[10px] text-amber-800 leading-relaxed text-justify">
+                    <strong>AVISO ACADÉMICO:</strong> Esta plataforma es una herramienta educativa. <strong>No reemplaza un Estudio de Mecánica de Suelos (EMS)</strong> formal. No nos hacemos responsables de su uso en proyectos constructivos reales.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        lucide.createIcons();
+
+        // 1. MOCK DATA
+        const mockBoundary = { "type": "FeatureCollection", "features": [{ "type": "Feature", "geometry": { "type": "Polygon", "coordinates": [[[-97.48, 20.58], [-97.35, 20.58], [-97.35, 20.45], [-97.48, 20.45], [-97.48, 20.58]]] } }] };
+        const mockVertisol = { "type": "FeatureCollection", "features": [{ "type": "Feature", "geometry": { "type": "Polygon", "coordinates": [[[-97.46, 20.55], [-97.42, 20.55], [-97.42, 20.48], [-97.46, 20.48], [-97.46, 20.55]]] } }] };
+        const mockRegosol = { "type": "FeatureCollection", "features": [{ "type": "Feature", "geometry": { "type": "Polygon", "coordinates": [[[-97.42, 20.55], [-97.38, 20.55], [-97.38, 20.48], [-97.42, 20.48], [-97.42, 20.55]]] } }] };
+        const mockTechnosol = { "type": "FeatureCollection", "features": [{ "type": "Feature", "geometry": { "type": "Polygon", "coordinates": [[[-97.41, 20.54], [-97.37, 20.54], [-97.37, 20.47], [-97.41, 20.47], [-97.41, 20.54]]] } }] };
+        const mockCambisol = { "type": "FeatureCollection", "features": [{ "type": "Feature", "geometry": { "type": "Polygon", "coordinates": [[[-97.44, 20.57], [-97.38, 20.57], [-97.38, 20.55], [-97.44, 20.55], [-97.44, 20.57]]] } }] };
+
+        // 2. VALIDACIÓN
+        let boundaryGeoJSON = null;
+        if (typeof json_PRDELIMITACIN_5 !== 'undefined') {
+            boundaryGeoJSON = json_PRDELIMITACIN_5;
+            document.getElementById('preview-alert').classList.add('hidden');
+        } else {
+            boundaryGeoJSON = mockBoundary;
+        }
+        
+        // 3. BASE DE DATOS
+        const suelosData = {
+            "regosol": { 
+                id: 'regosol', 
+                nombre: 'Suelo Regosol', 
+                clase: 'Calcárico', 
+                color: '#eab308', 
+                geojson: typeof json_SUELOTIPOREGASOLCALCARICO_2 !== 'undefined' ? json_SUELOTIPOREGASOLCALCARICO_2 : mockRegosol, 
+                img_caracteristicas: [
+                    { src: 'data/img/regosol_mapa.webp', fuente: 'Universidad Veracruzana' },
+                    { src: 'data/img/regosol_caracteristicas.webp', fuente: 'INEGI' }
+                ],
+                img_cimentacion: [
+                    { src: 'data/img/regosol_losa_cimentacion.webp', titulo: 'Opción 1: Losa de Cimentación', fuente: 'Ilustración referencial (IA: Google Gemini)' },
+                    { src: 'data/img/regosol_zapata_corrida.webp', titulo: 'Opción 2: Zapatas Corridas', fuente: 'Ilustración referencial (IA: Google Gemini)' }
+                ],
+                descripcion: 'Son suelos poco desarrollados en materiales no consolidados que carecen de un horizonte móllico o úmbrico, no son muy delgados. Los Regosoles son muy extensos en tierras erosionadas y zonas de acumulación, en particular en zonas áridas y semiáridas y en terrenos montañosos.', 
+                calificador: 'Calcárico: indica que el suelo contiene alto contenido de carbonato de calcio (CaCO₃). El pH es alcalino. Suele haber presencia de cal. Puede afectar la disponibilidad de nutrientes.\nHúmico: tiene alto contenido de materia orgánica (humus). Mayor fertilidad. Mejor retención de agua. Estructura más estable.', 
+                propiedades: { 
+                    "Estructura": "Suelta, poco desarrollada", 
+                    "Cohesión": "Baja", 
+                    "Capacidad de Carga": "Baja a media", 
+                    "Permeabilidad": "Media a alta",
+                    "Compresibilidad": "Media",
+                    "Erosión": "Alta"
+                }, 
+                cimentacion: { 
+                    capacidad: '0.5 a 2 kg/cm²', 
+                    recomendacion: 'Losa de cimentación de concreto armado', 
+                    motivos: [
+                        'Distribuye uniformemente las cargas.',
+                        'Reduce asentamientos en suelos poco consolidados como el Regosol.',
+                        'Es común en viviendas de 1–2 niveles en suelos de capacidad media a baja.'
+                    ], 
+                    alternativa: 'Zapatas corridas de concreto armado (si el suelo está compactado y presenta capacidad media).' 
+                } 
+            },
+            "vertisol": { 
+                id: 'vertisol', 
+                nombre: 'Suelo Vertisol', 
+                clase: 'Pélico', 
+                color: '#3b82f6', 
+                geojson: typeof json_SUELOTIPOVERTISOLPELICO_1 !== 'undefined' ? json_SUELOTIPOVERTISOLPELICO_1 : mockVertisol, 
+                img_caracteristicas: [
+                    { src: 'data/img/vertisol_mapa.webp', fuente: 'Universidad Veracruzana' },
+                    { src: 'data/img/vertisol_caracteristicas.webp', fuente: 'INEGI' }
+                ],
+                img_cimentacion: [
+                    { src: 'data/img/vertisol_losa_cimentacion.webp', titulo: 'Opción 1: Losa de Cimentación', fuente: 'Ilustración referencial (IA: Google Gemini)' },
+                    { src: 'data/img/vertisol_zapata_corrida.webp', titulo: 'Opción 2: Zapata Corrida', fuente: 'Ilustración referencial (IA: Google Gemini)' },
+                    { src: 'data/img/vertisol_cimentacion_profunda.webp', titulo: 'Opción 3: Pilotes', fuente: 'Ilustración referencial (IA: Google Gemini)' }
+                ],
+                descripcion: 'Suelos de arcillas pesadas con una alta proporción de arcillas expandibles. Estos suelos forman profundas y anchas grietas desde la superficie hacia abajo cuando se secan, lo cual sucede en la mayoría de los años.', 
+                calificador: 'Pélico: subtipo específico se caracteriza por tener altísimo contenido de arcillas expansivas. Tiene alto contenido de arcilla (>45–50%). Presenta textura muy fina. Es un suelo muy plástico y cohesivo.\nClayico: que tiene una clase textural arcillosa, arcillo arenosa o arcillo limosa. Más del 35–40% de partículas de arcilla. Partículas muy finas (< 0.002 mm). Alta cohesión entre partículas.', 
+                propiedades: { 
+                    "Estructura": "Arcillosa", 
+                    "Cohesión": "Alta", 
+                    "Capacidad de Carga": "Media (variable)", 
+                    "Permeabilidad": "Baja",
+                    "Plasticidad": "Alta",
+                    "Expansión": "Muy alta"
+                }, 
+                cimentacion: { 
+                    capacidad: 'Seco: 1.5 a 3.0 kg/cm² | Húmedo: 0.5 a 1.5 kg/cm²', 
+                    recomendacion: 'Losa de cimentación de concreto armado', 
+                    motivos: [
+                        'Distribuye la carga en toda el área.',
+                        'Reduce asentamientos diferenciales.',
+                        'Funciona mejor en suelos expansivos.',
+                        'Actúa como una "placa rígida".'
+                    ], 
+                    alternativa: 'Zapata corrida solo si: el suelo está mejorado y la capacidad de carga es suficiente.\nCimentación profunda (pilotes) se usa cuando: el suelo superficial es muy inestable y hay estratos firmes a mayor profundidad.' 
+                } 
+            },
+            "cambisol": { 
+                id: 'cambisol', 
+                nombre: 'Suelo Cambisol', 
+                clase: 'Vértico', 
+                color: '#d97706', 
+                geojson: typeof json_SUELOTIPOCAMBISOLVERTICO_4 !== 'undefined' ? json_SUELOTIPOCAMBISOLVERTICO_4 : mockCambisol, 
+                img_caracteristicas: [
+                    { src: 'data/img/cambisol_mapa.webp', fuente: 'Universidad Veracruzana' },
+                    { src: 'data/img/cambisol_caracteristicas.webp', fuente: 'INEGI' }
+                ],
+                img_cimentacion: [
+                    { src: 'data/img/cambisol_zapata_corrida.webp', titulo: 'Opción 1: Zapata Corrida', fuente: 'Ilustración referencial (IA: Google Gemini)' },
+                    { src: 'data/img/cambisol_losa_cimentacion.webp', titulo: 'Opción 2: Losa de Cimentación', fuente: 'Ilustración referencial (IA: Google Gemini)' },
+                    { src: 'data/img/cambisol_cimentacion_profunda.webp', titulo: 'Opción 3: Cimentación Profunda', fuente: 'Ilustración referencial (IA: Google Gemini)' }
+                ],
+                descripcion: 'Combinan suelos con formación al menos de un horizonte subsuperficial incipiente. La transformación del material parental es evidente por la formación de estructura y coloración principalmente parduzca, el aumento de porcentaje de arcilla, y/o remoción de carbonatos.', 
+                calificador: 'Vértico: es un horizonte subsuperficial arcilloso que, como resultado de expansion y contracción, presenta slickensides (caras de presión con estriamientos o canales suaves) y agregados en forma de cuña.\nÉutrico: alta saturación de bases (>50%) y presencia de nutrientes como calcio, magnesio, potasio. Esto lo hace un suelo fértil y químicamente equilibrado.', 
+                propiedades: { 
+                    "Desarrollo": "Medio", 
+                    "Cohesión": "Media", 
+                    "Capacidad de Carga": "Media", 
+                    "Permeabilidad": "Media a baja",
+                    "Expansión": "Baja a moderada",
+                    "Estabilidad": "Media"
+                }, 
+                cimentacion: { 
+                    capacidad: '1.0 a 2.0 kg/cm²', 
+                    recomendacion: 'Zapata corrida reforzada', 
+                    motivos: [
+                        'Suelo con baja a media plasticidad.',
+                        'Contenido de arcilla moderado.',
+                        'Buena compactación.'
+                    ], 
+                    alternativa: 'Losa de cimentación se usa cuando: alto contenido de arcilla, comportamiento vértico o presencia de humedad variable.\nCimentación profunda (poco común) solo si: el suelo superficial es muy compresible y existe estrato firme a profundidad.' 
+                } 
+            },
+            "technosol": { 
+                id: 'technosol', 
+                nombre: 'Suelo Technosol', 
+                clase: 'Urbano', 
+                color: '#94a3b8', 
+                geojson: typeof json_SUELOTIPOTECHNOSOL_3 !== 'undefined' ? json_SUELOTIPOTECHNOSOL_3 : mockTechnosol, 
+                img_caracteristicas: [
+                    { src: 'data/img/technosol_mapa.webp', fuente: 'Universidad Veracruzana' },
+                    { src: 'data/img/technosol_caracteristicas.webp', fuente: 'INEGI' }
+                ],
+                img_cimentacion: [
+                    { src: 'data/img/technosol_zapata_corrida.webp', titulo: 'Opción 1: Sustitución de Suelo + Zapatas', fuente: 'Ilustración referencial (IA: Google Gemini)' },
+                    { src: 'data/img/technosol_losa_cimentacion.webp', titulo: 'Opción 2: Losa de Cimentación', fuente: 'Ilustración referencial (IA: Google Gemini)' },
+                    { src: 'data/img/technosol_cimentacion_profunda.webp', titulo: 'Opción 3: Pilotes', fuente: 'Ilustración referencial (IA: Google Gemini)' }
+                ],
+                descripcion: 'Suelos cuyas propiedades y edafogénesis están dominadas por su origen técnico. Contienen una cantidad significativa de artefactos (algo en el suelo reconociblemente hecho o fuertemente alterado por el hombre o extraído de profundidades mayores), o están sellados por material duro técnico (material duro creado por los seres humanos que tiene propiedades diferentes de la roca natural) o contienen una geomembrana.', 
+                calificador: 'Ecránico: suelo cubierto/sellado, falta de infiltración, problemas de drenaje, necesidad de sistemas pluviales, poca interacción con el suelo natural.\nÚrbico: suelo mezclado con residuos, inestabilidad y heterogeneidad, baja capacidad portante variable. Necesidad de estudios geotécnicos y mejoramiento del suelo. Riesgo de asentamientos diferenciales.', 
+                propiedades: { 
+                    "Estructura": "Alterada y heterogénea", 
+                    "Cohesión": "Baja o inconsistente", 
+                    "Capacidad de Carga": "Baja y variable", 
+                    "Permeabilidad": "Baja (sellado) / irregular",
+                    "Compresibilidad": "Alta",
+                    "Erosión": "Baja superficial / interna posible"
+                }, 
+                cimentacion: { 
+                    capacidad: 'Baja y variable', 
+                    recomendacion: 'Sustitución + zapatas (cargas ligeras)', 
+                    motivos: [
+                        'Retirar relleno y reemplazar por material compacto.'
+                    ], 
+                    alternativa: 'Losa de cimentación: distribuye cargas uniformemente, reduce asentamientos diferenciales, ideal para suelo heterogéneo.\nPilotes (cargas altas): transmiten carga a suelo firme profundo, para edificios o rellenos muy profundos.' 
+                } 
+            }
+        };
+
+        // 4. MAPAS BASE
+        let googleStreets = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { maxZoom: 19, attribution: '&copy; Google' });
+        const googleSat = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom: 19, attribution: '&copy; Google' });
+        const topoMap = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19, attribution: '&copy; Esri' });
+
+        const map = L.map('map', { 
+            zoomControl: false, 
+            attributionControl: false,
+            layers: [googleStreets]
+        }).setView([20.5333, -97.4500], 13);
+        
+        L.control.zoom({ position: 'bottomleft' }).addTo(map);
+
+        // Fallback automático: si Google bloquea las tiles, cambiamos a CartoDB Voyager sin que el usuario lo note.
+        (function() {
+            let errorCount = 0;
+            let triggered = false;
+            googleStreets.on('tileerror', function() {
+                if (triggered) return;
+                errorCount++;
+                if (errorCount < 3) return;
+                triggered = true;
+                console.warn('[MAPINSU] Google tiles no disponibles. Cambiando a CartoDB Voyager.');
+                const carto = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', { maxZoom: 19, subdomains: 'abcd', attribution: '&copy; OpenStreetMap contributors &copy; CARTO' });
+                if (map.hasLayer(googleStreets)) {
+                    map.removeLayer(googleStreets);
+                    map.addLayer(carto);
+                }
+                googleStreets = carto;
+            });
+        })();
+
+        // Control de Capas Custom (JS)
+        const layersMap = {}; 
+
+        window.changeBaseMap = (type) => {
+            map.removeLayer(googleStreets);
+            map.removeLayer(googleSat);
+            map.removeLayer(topoMap);
+            
+            if(type === 'streets') {
+                map.addLayer(googleStreets);
+            } else if(type === 'satellite') {
+                map.addLayer(googleSat);
+            } else if(type === 'topo') {
+                map.addLayer(topoMap);
+            }
+            document.querySelectorAll(`input[name="basemap"][value="${type}"], input[name="basemap_mobile"][value="${type}"]`).forEach(el => el.checked = true);
+        };
+
+        window.toggleOverlay = (id, checked) => {
+            if(checked) {
+                map.addLayer(layersMap[id]);
+            } else {
+                map.removeLayer(layersMap[id]);
+            }
+            document.querySelectorAll(`input.overlay-chk[data-id="${id}"]`).forEach(el => el.checked = checked);
+        };
+
+        const deskList = document.getElementById('desktop-layer-list');
+        const mobList = document.getElementById('mobile-layer-list');
+
+        // 5. DIBUJAR LÍMITE MUNICIPAL
+        let activeLayer = null;
+        let prBounds = null;
+
+        if (boundaryGeoJSON) {
+            map.createPane('boundaryPane');
+            map.getPane('boundaryPane').style.zIndex = 450; 
+            map.getPane('boundaryPane').style.pointerEvents = 'none';
+
+            const boundaryLayer = L.geoJSON(boundaryGeoJSON, {
+                pane: 'boundaryPane',
+                style: { color: '#0f172a', weight: 4, fillOpacity: 0, dashArray: '6, 8' },
+                interactive: false
+            }).addTo(map);
+            
+            layersMap['boundary'] = boundaryLayer;
+            prBounds = boundaryLayer.getBounds();
+            map.fitBounds(prBounds, { padding: [20, 20] });
+
+            const boundaryItemDesk = `
+                <label class="flex items-center gap-2 cursor-pointer group mb-1">
+                    <input type="checkbox" checked data-id="boundary" onchange="toggleOverlay('boundary', this.checked)" class="custom-checkbox overlay-chk">
+                    <span class="w-3 h-3 rounded-[3px] border-2 border-slate-800 border-dashed flex-shrink-0" style="background-color: transparent;"></span>
+                    <span class="text-sm font-bold text-slate-800 group-hover:text-black whitespace-nowrap truncate">Límite Poza Rica</span>
+                </label>`;
+            
+            const boundaryItemMob = `
+                <label class="flex items-center gap-3 cursor-pointer py-1 mb-1">
+                    <input type="checkbox" checked data-id="boundary" onchange="toggleOverlay('boundary', this.checked)" class="custom-checkbox w-5 h-5 overlay-chk">
+                    <span class="w-4 h-4 rounded-md border-2 border-slate-800 border-dashed flex-shrink-0" style="background-color: transparent;"></span>
+                    <span class="text-base font-bold text-slate-800">Límite Poza Rica</span>
+                </label>`;
+
+            deskList.insertAdjacentHTML('afterbegin', boundaryItemDesk);
+            mobList.insertAdjacentHTML('afterbegin', boundaryItemMob);
+        }
+
+        window.centrarMapa = () => {
+            if (prBounds) map.flyToBounds(prBounds, { padding: [20, 20], duration: 0.8 });
+        };
+
+        // 6. DIBUJAR POLÍGONOS DE SUELO
+        Object.values(suelosData).forEach(suelo => {
+            if (!suelo.geojson) return;
+            
+            const sueloLayer = L.geoJSON(suelo.geojson, {
+                style: { fillColor: suelo.color, color: 'white', weight: 1.5, fillOpacity: 0.4 },
+                onEachFeature: (feature, layer) => {
+                    layer.on({
+                        click: (e) => {
+                            if (activeLayer) activeLayer.setStyle({ fillOpacity: 0.4, weight: 1.5, color: 'white' });
+                            activeLayer = e.target;
+                            activeLayer.setStyle({ fillOpacity: 0.7, weight: 3, color: '#1e293b' });
+                            map.panTo(e.latlng);
+                            openDrawer(suelo.id);
+                        }
+                    });
+                }
+            });
+            
+            sueloLayer.addTo(map);
+            layersMap[suelo.id] = sueloLayer;
+
+            const itemHTML = `
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" checked data-id="${suelo.id}" onchange="toggleOverlay('${suelo.id}', this.checked)" class="custom-checkbox overlay-chk">
+                    <span class="w-3 h-3 rounded-[3px] border border-slate-200/50 shadow-sm flex-shrink-0" style="background-color: ${suelo.color};"></span>
+                    <span class="text-sm font-medium text-slate-700 group-hover:text-slate-900 whitespace-nowrap truncate">${suelo.nombre}</span>
+                </label>`;
+            
+            const itemHTMLMob = `
+                <label class="flex items-center gap-3 cursor-pointer py-1">
+                    <input type="checkbox" checked data-id="${suelo.id}" onchange="toggleOverlay('${suelo.id}', this.checked)" class="custom-checkbox w-5 h-5 overlay-chk">
+                    <span class="w-4 h-4 rounded-md border border-slate-200/50 shadow-sm flex-shrink-0" style="background-color: ${suelo.color};"></span>
+                    <span class="text-base font-medium text-slate-800">${suelo.nombre}</span>
+                </label>`;
+
+            deskList.insertAdjacentHTML('beforeend', itemHTML);
+            mobList.insertAdjacentHTML('beforeend', itemHTMLMob);
+        });
+
+        // 7. LÓGICA DEL PANEL (Drawer)
+        const drawer = document.getElementById('info-drawer');
+
+        function openDrawer(sueloId) {
+            const data = suelosData[sueloId];
+            document.getElementById('suelo-nombre').textContent = data.nombre;
+            document.getElementById('suelo-clase').textContent = data.clase;
+            document.getElementById('suelo-clase').style.backgroundColor = data.color + '20';
+            document.getElementById('suelo-clase').style.color = data.color;
+            document.getElementById('suelo-desc').textContent = data.descripcion;
+            
+            const galeriaSection = document.getElementById('galeria-section');
+            const galeriaGrid = document.getElementById('galeria-grid');
+            galeriaGrid.innerHTML = '';
+            
+            if (data.img_caracteristicas && data.img_caracteristicas.length > 0) {
+                galeriaSection.classList.remove('hidden');
+                data.img_caracteristicas.forEach((img, index) => {
+                    galeriaGrid.innerHTML += `
+                        <div class="flex flex-col gap-1">
+                            <div class="aspect-video bg-slate-100 rounded-lg overflow-hidden border border-slate-200 cursor-pointer group shadow-sm hover:shadow-md transition-all relative" onclick="expandirImagen('${img.src}')">
+                                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10 flex items-center justify-center">
+                                    <i data-lucide="zoom-in" class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 drop-shadow-md transition-opacity"></i>
+                                </div>
+                                <img src="${img.src}" alt="${data.nombre} - Referencia ${index + 1}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/600x400/e2e8f0/64748b?text=Falta+Imagen'">
+                            </div>
+                            <p class="text-[8px] sm:text-[9px] text-slate-400 font-medium text-right pr-1">Fuente: ${img.fuente}</p>
+                        </div>
+                    `;
+                });
+                lucide.createIcons();
+            } else {
+                galeriaSection.classList.add('hidden');
+            }
+
+            const propsGrid = document.getElementById('propiedades-grid');
+            propsGrid.innerHTML = '';
+            for (const [key, value] of Object.entries(data.propiedades)) {
+                propsGrid.innerHTML += `<div class="bg-slate-50 border border-slate-100 rounded-lg p-2.5 sm:p-3"><p class="text-[9px] sm:text-[10px] uppercase font-bold text-slate-400 mb-0.5">${key}</p><p class="text-xs sm:text-sm font-semibold text-slate-700">${value}</p></div>`;
+            }
+
+            document.getElementById('suelo-calificador').innerHTML = data.calificador.replace(/\n/g, '<br>');
+            document.getElementById('cim-capacidad').textContent = data.cimentacion.capacidad;
+            document.getElementById('cim-recom').textContent = data.cimentacion.recomendacion;
+            
+            const motivosUl = document.getElementById('cim-motivos');
+            motivosUl.innerHTML = '';
+            data.cimentacion.motivos.forEach(motivo => { motivosUl.innerHTML += `<li>${motivo}</li>`; });
+            
+            document.getElementById('cim-alt').innerHTML = data.cimentacion.alternativa.replace(/\n/g, '<br><br>');
+
+            const cimGaleriaGrid = document.getElementById('cim-galeria-grid');
+            cimGaleriaGrid.innerHTML = '';
+            
+            if (data.img_cimentacion && data.img_cimentacion.length > 0) {
+                data.img_cimentacion.forEach((img, index) => {
+                    cimGaleriaGrid.innerHTML += `
+                        <div class="flex flex-col gap-1.5 mt-1 pt-3 border-t border-emerald-100/60 first:border-0 first:pt-1">
+                            <p class="text-[10px] sm:text-[11px] font-bold text-emerald-800 uppercase tracking-tight">${img.titulo}</p>
+                            <div class="aspect-video bg-emerald-900/10 rounded-lg overflow-hidden border border-emerald-200/50 cursor-pointer group shadow-sm hover:shadow-md transition-all relative" onclick="expandirImagen('${img.src}')">
+                                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors z-10 flex items-center justify-center">
+                                    <i data-lucide="zoom-in" class="w-6 h-6 text-white opacity-0 group-hover:opacity-100 drop-shadow-md transition-opacity"></i>
+                                </div>
+                                <img src="${img.src}" alt="${img.titulo}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/600x400/e2e8f0/64748b?text=Cimentación'">
+                            </div>
+                            <p class="text-[8px] sm:text-[9px] text-emerald-700/80 font-medium text-right pr-1">${img.fuente}</p>
+                        </div>
+                    `;
+                });
+                lucide.createIcons();
+            }
+
+            drawer.classList.remove('drawer-closed');
+            drawer.classList.add('drawer-open');
+        }
+
+        function closeDrawer() {
+            drawer.classList.remove('drawer-open');
+            drawer.classList.add('drawer-closed');
+            if (activeLayer) {
+                activeLayer.setStyle({ fillOpacity: 0.4, weight: 1.5, color: 'white' });
+                activeLayer = null;
+            }
+        }
+
+        // 8. LÓGICA DE MODALES
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            const overlay = modal.querySelector('.modal-overlay');
+            const content = modal.querySelector('.modal-content');
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+                
+                content.classList.remove('opacity-0', 'translate-y-full', 'translate-y-4', 'sm:translate-y-8', 'scale-95', 'sm:scale-95');
+                content.classList.add('opacity-100', 'translate-y-0', 'scale-100');
+            }, 20);
+        }
+
+        window.closeModal = function(id) {
+            const modal = document.getElementById(id);
+            const overlay = modal.querySelector('.modal-overlay');
+            const content = modal.querySelector('.modal-content');
+            
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0');
+            
+            content.classList.remove('opacity-100', 'translate-y-0', 'scale-100');
+            content.classList.add('opacity-0');
+            
+            if (id === 'modal-layers') {
+                content.classList.add('translate-y-full', 'sm:translate-y-8', 'sm:scale-95');
+            } else {
+                content.classList.add('translate-y-4', 'sm:translate-y-8', 'scale-95');
+            }
+            
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                if (id === 'modal-image') {
+                    document.getElementById('expanded-image').src = '';
+                }
+            }, 300);
+        }
+
+        window.expandirImagen = function(src) {
+            const imgEl = document.getElementById('expanded-image');
+            imgEl.src = src;
+            imgEl.onerror = function() { this.src = 'https://placehold.co/1200x800/e2e8f0/64748b?text=Falta+Imagen' };
+            openModal('modal-image');
+        }
+    </script>
+</body>
+</html>
